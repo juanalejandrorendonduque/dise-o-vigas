@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Vigas — Concreto Reforzado</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080d;--s1:#0d0f18;--s2:#12151f;--s3:#171b27;--s4:#1c2133;
+  --border:#1f2535;--border2:#28304a;
+  --acc:#c8a84b;--acc2:#8c6e28;--acc3:rgba(200,168,75,.08);
+  --blue:#4b8dc8;--blue2:rgba(75,141,200,.12);
+  --green:#4bc87a;--green2:rgba(75,200,122,.10);
+  --red:#c84b4b;--red2:rgba(200,75,75,.10);
+  --muted:#4a546e;--muted2:#6a7a9e;
+  --text:#d8e0f0;--text2:#a0aec8;
+  --mono:'DM Mono',monospace;--head:'Syne',sans-serif;--body:'DM Sans',sans-serif;
+  --r:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background:linear-gradient(rgba(200,168,75,.015) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(200,168,75,.015) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;z-index:0}
+
+.wrap{max-width:1200px;margin:0 auto;padding:32px 16px 100px;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{padding:0 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px;
+  display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:4px;color:var(--acc);
+  text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--acc)}
+h1{font-family:var(--head);font-size:30px;font-weight:800;letter-spacing:-.5px;line-height:1}
+h1 em{font-style:normal;color:var(--acc)}
+.sub{margin-top:5px;font-size:12px;color:var(--muted2);font-weight:300}
+.norm-badge{font-family:var(--mono);font-size:9px;padding:4px 12px;
+  border:1px solid var(--acc2);color:var(--acc);border-radius:4px;background:var(--acc3);letter-spacing:2px}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+.left{display:flex;flex-direction:column;gap:14px}
+.right{display:flex;flex-direction:column;gap:14px}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--acc),transparent);opacity:.35}
+.card-hdr{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.cn{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;
+  background:var(--acc3);border:1px solid var(--acc2);color:var(--acc);letter-spacing:1px}
+.ct{font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted2)}
+
+/* FIELDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.field{display:flex;flex-direction:column;gap:4px}
+label{font-family:var(--mono);font-size:10px;color:var(--muted2);
+  display:flex;align-items:center;justify-content:space-between}
+.utag{font-size:9px;color:var(--blue);background:var(--blue2);
+  border:1px solid rgba(75,141,200,.25);border-radius:3px;padding:1px 5px}
+.utag-a{font-size:9px;color:var(--acc);background:var(--acc3);
+  border:1px solid var(--acc2);border-radius:3px;padding:1px 5px}
+input,select{background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;
+  width:100%;outline:none;transition:border .15s,box-shadow .15s;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(200,168,75,.1)}
+input::placeholder{color:#1e2435}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a546e'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;padding-right:26px;cursor:pointer}
+select option{background:#0d0f18}
+.hint{font-family:var(--mono);font-size:9px;color:var(--acc);margin-top:2px;min-height:12px}
+.sep{height:1px;background:var(--border);margin:10px 0}
+
+/* TOGGLE */
+.tog-row{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 11px;background:var(--bg);border:1px solid var(--border2);border-radius:6px}
+.tog-lbl{font-family:var(--mono);font-size:10px;color:var(--text2)}
+.tog{position:relative;width:38px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-tr{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:background .2s}
+.tog input:checked+.tog-tr{background:var(--acc2);border:1px solid var(--acc)}
+.tog-tr::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;
+  background:var(--muted);border-radius:50%;transition:transform .2s,background .2s}
+.tog input:checked+.tog-tr::after{transform:translateX(18px);background:var(--acc)}
+
+/* CAPAS DE REFUERZO */
+.layers-container{display:flex;flex-direction:column;gap:10px}
+
+.layer-block{background:var(--s3);border:1px solid var(--border2);border-radius:7px;
+  padding:14px;position:relative;animation:si .2s ease}
+@keyframes si{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.layer-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.layer-badge{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#000;
+  background:var(--acc);border-radius:3px;padding:2px 8px;font-weight:700;flex-shrink:0}
+.layer-subtitle{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;flex:1}
+.layer-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;
+  padding:2px 4px;border-radius:3px;transition:all .15s;flex-shrink:0}
+.layer-del:hover{color:var(--red);background:var(--red2)}
+
+/* FILAS DE BARRAS DENTRO DE UNA CAPA */
+.bar-rows{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.bar-row{display:grid;grid-template-columns:110px 70px 1fr 28px;gap:6px;align-items:center}
+.bar-row-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px}
+
+.add-bar-btn{display:flex;align-items:center;gap:5px;background:none;border:1px dashed var(--border2);
+  border-radius:5px;padding:5px 10px;color:var(--muted);font-family:var(--mono);font-size:10px;
+  cursor:pointer;transition:all .15s;width:100%;justify-content:center}
+.add-bar-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+.del-row-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;
+  width:24px;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0}
+.del-row-btn:hover{color:var(--red);background:var(--red2)}
+
+.layer-sep-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+
+/* BOTÓN AÑADIR CAPA */
+.add-layer-btn{display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px;background:none;border:1px dashed var(--acc2);border-radius:7px;
+  color:var(--acc);font-family:var(--mono);font-size:11px;letter-spacing:2px;
+  cursor:pointer;transition:all .15s;width:100%;text-transform:uppercase}
+.add-layer-btn:hover{background:var(--acc3);border-color:var(--acc)}
+
+/* UNIT SEL */
+.unit-section{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.unit-title{font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:12px}
+.unit-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.unit-field{display:flex;flex-direction:column;gap:4px}
+.unit-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.3px}
+.unit-sel{background:var(--bg);border:1px solid var(--border2);border-radius:5px;
+  color:var(--acc);font-family:var(--mono);font-size:10px;padding:5px 22px 5px 7px;
+  outline:none;cursor:pointer;width:100%;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%234a546e'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center}
+.unit-sel option{background:#0d0f18;color:var(--text)}
+
+/* BTN */
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--acc),#a08030);
+  color:#0a0800;font-family:var(--head);font-size:15px;font-weight:800;letter-spacing:3px;
+  text-transform:uppercase;border:none;border-radius:var(--r);cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:opacity .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 24px rgba(200,168,75,.25)}
+.btn:hover::before{opacity:1}
+.btn:active{transform:translateY(0)}
+
+/* ERR */
+.err{background:var(--red2);border:1px solid rgba(200,75,75,.3);border-radius:6px;
+  padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--red);display:none;margin-bottom:8px}
+
+/* DIAGRAMA */
+.diagram-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.diagram-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--blue),transparent);opacity:.4}
+.diagram-title{font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:14px;
+  display:flex;align-items:center;gap:8px}
+.diagram-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.canvas-wrap{display:flex;justify-content:center;align-items:center;
+  background:var(--bg);border:1px solid var(--border2);border-radius:6px;min-height:360px;padding:6px}
+#sectionCanvas{display:block}
+
+/* RESUMEN CAPAS */
+.layers-summary{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.ls-row{display:flex;align-items:center;gap:8px;padding:6px 10px;
+  background:var(--s3);border-radius:5px;border:1px solid var(--border2)}
+.ls-badge{font-family:var(--mono);font-size:9px;color:#000;background:var(--acc);
+  border-radius:3px;padding:1px 6px;flex-shrink:0}
+.ls-info{font-family:var(--mono);font-size:10px;color:var(--text2);flex:1}
+.ls-dt{font-family:var(--mono);font-size:9px;color:var(--blue)}
+
+/* RESULTADOS */
+.results-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;display:none;animation:fu .35s ease}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.res-topbar{background:var(--s2);border-bottom:1px solid var(--border);
+  padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.res-heading{font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.status-pill{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:2px;
+  padding:4px 12px;border-radius:20px}
+.pill-ok{background:var(--green2);border:1px solid rgba(75,200,122,.4);color:var(--green)}
+.pill-fail{background:var(--red2);border:1px solid rgba(200,75,75,.4);color:var(--red)}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.metric{background:var(--s2);padding:12px 14px}
+.m-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.m-val{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text)}
+.m-val.acc{color:var(--acc)}.m-val.blue{color:var(--blue)}
+.m-val.green{color:var(--green)}.m-val.red{color:var(--red)}
+.m-unit{font-size:9px;color:var(--muted);margin-left:2px}
+
+.cuantias-block{padding:14px 18px;background:var(--s3);border-bottom:1px solid var(--border)}
+.cuantias-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.cuantia-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.cuantia-name{font-family:var(--mono);font-size:10px;color:var(--text2);width:110px;flex-shrink:0}
+.cuantia-bar-wrap{flex:1;background:var(--bg);border-radius:3px;height:5px;overflow:hidden}
+.cuantia-bar{height:100%;border-radius:3px;transition:width .4s}
+.cuantia-val{font-family:var(--mono);font-size:10px;color:var(--muted2);width:80px;text-align:right}
+.cb-rho{background:var(--blue)}.cb-min{background:var(--muted)}
+.cb-t{background:var(--green)}.cb-max{background:var(--acc)}.cb-b{background:var(--red)}
+
+.tipo-block{padding:10px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.tipo-icon{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.tipo-name{font-family:var(--head);font-size:12px;font-weight:700}
+.tipo-desc{font-size:11px;color:var(--muted2);margin-top:1px}
+
+.layer-results{padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.lr{background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:10px 14px;display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px}
+.lr-ic{width:26px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.lr-ic.ok{background:var(--green2)}.lr-ic.fail{background:var(--red2)}.lr-ic.warn{background:rgba(200,168,75,.1)}
+.lr-name{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.lr-eps{font-family:var(--mono);font-size:16px;font-weight:500;line-height:1;margin-bottom:1px}
+.lr-eps.ok{color:var(--green)}.lr-eps.fail{color:var(--red)}.lr-eps.warn{color:var(--acc)}
+.lr-verdict{font-size:10px;color:var(--muted2)}
+.lr-verdict b{color:var(--text);font-weight:500}
+.lr-dt-l{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.lr-dt-v{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:right}
+
+.flow-section{padding:14px 18px;border-top:1px solid var(--border)}
+.flow-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.flow-steps{display:flex;flex-direction:column;gap:5px}
+.flow-step{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;
+  background:var(--s2);border-radius:4px;border-left:2px solid var(--border2)}
+.flow-step.ok{border-left-color:var(--green)}.flow-step.fail{border-left-color:var(--red)}
+.fs-num{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px;width:14px;flex-shrink:0}
+.fs-txt{font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.5}
+.fs-txt b{color:var(--text);font-weight:500}
+
+/* colores barra */
+.dot-3{background:#4b8dc8}.dot-4{background:#4bc87a}.dot-5{background:#c8a84b}
+.dot-6{background:#c84b8d}.dot-7{background:#8dc84b}.dot-8{background:#c84b4b}
+.dot-9{background:#4bc8c8}.dot-10{background:#c87a4b}.dot-11{background:#a04bc8}
+
+@media(max-width:600px){.g2,.g3,.unit-grid{grid-template-columns:1fr 1fr}h1{font-size:24px}
+  .bar-row{grid-template-columns:90px 55px 1fr 24px}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ══ PANTALLA DE ACCESO ══ */
+#access-screen{
+  position:fixed;inset:0;z-index:9999;
+  background:#07080d;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Sans','Segoe UI',sans-serif;
+}
+#access-screen::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(200,168,75,.018) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(200,168,75,.018) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;
+}
+#access-screen::after{
+  content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(200,168,75,.07) 0%,transparent 65%);
+  pointer-events:none;
+}
+.access-box{
+  position:relative;z-index:1;
+  background:#0d0f18;border:1px solid #28304a;border-radius:12px;
+  padding:44px 40px;width:100%;max-width:420px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.access-logo{
+  font-family:'Syne','Segoe UI',sans-serif;
+  font-size:22px;font-weight:800;letter-spacing:-.5px;
+  color:#d8e0f0;margin-bottom:4px;line-height:1.2;
+}
+.access-logo em{color:#c8a84b;font-style:normal}
+.access-sub{
+  font-family:'DM Mono',Consolas,monospace;
+  font-size:9px;letter-spacing:3px;color:#4a546e;
+  text-transform:uppercase;margin-bottom:32px;
+}
+.access-label{
+  font-family:'DM Mono',Consolas,monospace;
+  font-size:10px;color:#6a7a9e;letter-spacing:.5px;
+  margin-bottom:8px;display:block;
+}
+.access-input{
+  width:100%;background:#07080d;border:1px solid #28304a;
+  border-radius:7px;color:#d8e0f0;
+  font-family:'DM Mono',Consolas,monospace;font-size:15px;
+  padding:12px 14px;outline:none;letter-spacing:2px;
+  text-transform:uppercase;transition:border .15s,box-shadow .15s;
+  -webkit-appearance:none;
+}
+.access-input:focus{
+  border-color:#c8a84b;
+  box-shadow:0 0 0 3px rgba(200,168,75,.12);
+}
+.access-input.error{
+  border-color:#c84b4b;
+  box-shadow:0 0 0 3px rgba(200,75,75,.1);
+  animation:shake .3s ease;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+.access-btn{
+  width:100%;margin-top:14px;padding:13px;
+  background:linear-gradient(135deg,#c8a84b,#a08030);
+  color:#0a0800;font-family:'Syne','Segoe UI',sans-serif;
+  font-size:14px;font-weight:800;letter-spacing:3px;text-transform:uppercase;
+  border:none;border-radius:7px;cursor:pointer;transition:all .2s;
+}
+.access-btn:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(200,168,75,.3)}
+.access-btn:active{transform:translateY(0)}
+.access-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.access-err{
+  margin-top:10px;padding:9px 12px;
+  background:rgba(200,75,75,.1);border:1px solid rgba(200,75,75,.3);
+  border-radius:5px;font-family:'DM Mono',Consolas,monospace;
+  font-size:10px;color:#c84b4b;display:none;text-align:center;
+}
+.access-footer{
+  margin-top:24px;padding-top:20px;border-top:1px solid #1f2535;
+  font-family:'DM Mono',Consolas,monospace;font-size:9px;
+  color:#4a546e;text-align:center;line-height:1.8;
+}
+.access-footer a{color:#6a7a9e;text-decoration:none}
+.access-footer a:hover{color:#c8a84b}
+</style>
+</head>
+<body>
+
+<!-- ══ PANTALLA DE ACCESO ══ -->
+<div id="access-screen">
+  <div class="access-box">
+    <div class="access-logo">Análisis de <em>Vigas</em></div>
+    <div class="access-sub">Concreto Reforzado · NSR-10 · ACI 318-19</div>
+
+    <label class="access-label">Código de acceso</label>
+    <input class="access-input" id="access-input" type="text"
+      placeholder="XXXX-XXXX-XXXX"
+      maxlength="20"
+      autocomplete="off" autocorrect="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter') checkAccess()">
+    <button class="access-btn" id="access-btn" onclick="checkAccess()">
+      Ingresar →
+    </button>
+    <div class="access-err" id="access-err">
+      Código incorrecto. Verifica e intenta de nuevo.
+    </div>
+
+    <div class="access-footer">
+      ¿No tienes un código?<br>
+      Contáctanos para adquirir tu licencia<br>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="hdr">
+  <div>
+    <div class="eyebrow">Ingeniería Civil · UTP</div>
+    <h1>Análisis de <em>Vigas</em></h1>
+    <p class="sub">Concreto reforzado a flexión · Capas mixtas de refuerzo · NSR-10 / ACI 318-19</p>
+  </div>
+  <div class="norm-badge">NSR-10 · ACI 318-19</div>
+</div>
+
+<div class="layout">
+<!-- ══ IZQUIERDA ══ -->
+<div class="left">
+
+  <!-- 01 MATERIALES -->
+  <div class="card">
+    <div class="card-hdr"><span class="cn">01</span><span class="ct">Materiales</span></div>
+    <div class="g2">
+      <div class="field">
+        <label>f'c <span class="utag-a">MPa</span></label>
+        <input type="number" id="fc" placeholder="ej. 21" min="10" step="any" oninput="hint('fc','hfc');redraw()">
+        <div class="hint" id="hfc"></div>
+      </div>
+      <div class="field">
+        <label>fy <span class="utag-a">MPa</span></label>
+        <input type="number" id="fy" placeholder="ej. 420" min="200" step="any" oninput="hint('fy','hfy');redraw()">
+        <div class="hint" id="hfy"></div>
+      </div>
+    </div>
+    <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px">
+      1 MPa = 10.197 kgf/cm² · Comunes: f'c = 21, 24.5, 28 MPa · fy = 280, 420 MPa
+    </p>
+  </div>
+
+  <!-- 02 SECCIÓN -->
+  <div class="card">
+    <div class="card-hdr"><span class="cn">02</span><span class="ct">Sección transversal</span></div>
+    <div class="g2">
+      <div class="field">
+        <label>Base b <span class="utag">cm</span></label>
+        <input type="number" id="base" placeholder="ej. 30" min="10" step="1" value="30" oninput="redraw()">
+      </div>
+      <div class="field">
+        <label>Altura h <span class="utag">cm</span></label>
+        <input type="number" id="altura" placeholder="ej. 60" min="15" step="1" value="60" oninput="redraw()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 RECUBRIMIENTO & ESTRIBOS -->
+  <div class="card">
+    <div class="card-hdr"><span class="cn">03</span><span class="ct">Recubrimiento &amp; Estribos</span></div>
+    <div class="g3">
+      <div class="field">
+        <label>Recub. libre <span class="utag">cm</span></label>
+        <input type="number" id="rec" placeholder="ej. 4" min="1" step=".5" value="4" oninput="redraw()">
+      </div>
+      <div class="field">
+        <label>Barra estribo</label>
+        <select id="bestr" onchange="redraw()">
+          <option value="3">#3</option><option value="4">#4</option><option value="5">#5</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <div class="tog-row" style="height:38px">
+          <span class="tog-lbl">Espiral</span>
+          <label class="tog"><input type="checkbox" id="espiral"><div class="tog-tr"></div></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 CAPAS DE REFUERZO -->
+  <div class="card">
+    <div class="card-hdr"><span class="cn">04</span><span class="ct">Refuerzo longitudinal</span></div>
+
+    <div class="layers-container" id="layers-container"></div>
+    <div style="height:10px"></div>
+    <button class="add-layer-btn" onclick="addLayer()">+ &nbsp;AÑADIR CAPA</button>
+  </div>
+
+  <!-- UNIDADES -->
+  <div class="unit-section">
+    <div class="unit-title">// Unidades de salida</div>
+    <div class="unit-grid">
+      <div class="unit-field">
+        <div class="unit-label">Longitudes</div>
+        <select class="unit-sel" id="u-long"><option value="cm">cm</option><option value="m">m</option></select>
+      </div>
+      <div class="unit-field">
+        <div class="unit-label">Áreas</div>
+        <select class="unit-sel" id="u-area"><option value="cm2">cm²</option></select>
+      </div>
+      <div class="unit-field">
+        <div class="unit-label">Resistencia</div>
+        <select class="unit-sel" id="u-res">
+          <option value="kgfcm2">kgf/cm²</option><option value="MPa">MPa</option>
+          <option value="psi">psi</option><option value="ksi">ksi</option>
+        </select>
+      </div>
+      <div class="unit-field">
+        <div class="unit-label">Momento</div>
+        <select class="unit-sel" id="u-mom"><option value="tonm">ton·m</option><option value="kNm">kN·m</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="err" id="err"></div>
+  <button class="btn" onclick="calcular()">⟶ &nbsp;GENERAR RESULTADOS</button>
+
+</div><!-- /left -->
+
+<!-- ══ DERECHA ══ -->
+<div class="right">
+
+  <!-- DIAGRAMA -->
+  <div class="diagram-card">
+    <div class="diagram-title">Vista de la sección</div>
+    <div class="canvas-wrap">
+      <canvas id="sectionCanvas" width="520" height="380"></canvas>
+    </div>
+    <!-- resumen -->
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);
+      text-transform:uppercase;margin-top:12px;margin-bottom:6px">// Resumen de capas</div>
+    <div class="layers-summary" id="layers-summary">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:6px">
+        Añade capas de refuerzo para ver el resumen
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="results-card" id="res-card">
+    <div class="res-topbar">
+      <div class="res-heading">Resultados del análisis</div>
+      <div class="status-pill" id="res-pill"></div>
+    </div>
+    <div class="metrics" id="res-metrics"></div>
+    <div class="cuantias-block" id="res-cuantias"></div>
+    <div class="tipo-block" id="res-tipo"></div>
+    <div class="layer-results" id="res-layers"></div>
+    <div class="flow-section">
+      <div class="flow-title">// Verificaciones NSR-10</div>
+      <div class="flow-steps" id="res-flow"></div>
+    </div>
+  </div>
+
+</div><!-- /right -->
+</div><!-- /layout -->
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════════════════════
+// TABLAS ASTM
+// ══════════════════════════════════════════════════════
+const AREA={3:.713,4:1.267,5:1.979,6:2.850,7:3.871,8:5.067,9:6.452,10:8.107,11:10.06};
+const DIAM={3:.953,4:1.270,5:1.588,6:1.905,7:2.223,8:2.540,9:2.865,10:3.226,11:3.581};
+const BAR_NUMS=[3,4,5,6,7,8,9,10,11];
+const BAR_COLORS={3:'#4b8dc8',4:'#4bc87a',5:'#c8a84b',6:'#c84b8d',
+  7:'#8dc84b',8:'#c84b4b',9:'#4bc8c8',10:'#c87a4b',11:'#a04bc8'};
+
+const MPa2kgf=10.1972;
+const CONV={long:{cm:1,m:.01},area:{'cm2':1},
+  res:{kgfcm2:1,MPa:1/MPa2kgf,psi:14.2233,ksi:.0142233},
+  mom:{tonm:1e-5,kNm:9.80665e-5}};
+const USYM={long:{cm:'cm',m:'m'},area:{'cm2':'cm²'},
+  res:{kgfcm2:'kgf/cm²',MPa:'MPa',psi:'psi',ksi:'ksi'},
+  mom:{tonm:'ton·m',kNm:'kN·m'}};
+
+function cvt(v,t){return v*CONV[t][document.getElementById('u-'+t).value]}
+function sym(t){return USYM[t][document.getElementById('u-'+t).value]}
+function fmt(v,d=3){return isNaN(v)||!isFinite(v)?'—':v.toFixed(d)}
+
+function hint(iid,hid){
+  const v=parseFloat(document.getElementById(iid).value);
+  document.getElementById(hid).textContent=(!isNaN(v)&&v>0)?'= '+(v*MPa2kgf).toFixed(2)+' kgf/cm²':'';
+}
+
+// ══════════════════════════════════════════════════════
+// ESTADO DE CAPAS
+// Cada capa: { id, sepV:cm, barRows:[{nb, count}] }
+// Capa 1 = inferior (más lejos del eje neutro)
+// ══════════════════════════════════════════════════════
+let layers=[];
+let layerIdCounter=0;
+
+function makeBarRow(nb=6,count=2){
+  return {nb:parseInt(nb),count:parseInt(count)};
+}
+function makeLayer(){
+  return{id:layerIdCounter++, sepV:2.5, barRows:[makeBarRow()]};
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER UI DE CAPAS
+// ══════════════════════════════════════════════════════
+function renderLayersUI(){
+  const cont=document.getElementById('layers-container');
+  cont.innerHTML='';
+
+  layers.forEach((layer,li)=>{
+    const total=layers.length;
+    const div=document.createElement('div');
+    div.className='layer-block';
+    div.dataset.lid=layer.id;
+
+    // Capa 1 = inferior = primera en el array
+    const label=`CAPA ${li+1}`;
+    const sublabel=li===0?'Inferior — más lejana del eje neutro':
+                   li===total-1?'Superior — más cercana al eje neutro':'';
+
+    div.innerHTML=`
+      <div class="layer-header">
+        <span class="layer-badge">${label}</span>
+        <span class="layer-subtitle">${sublabel}</span>
+        ${total>1?`<button class="layer-del" onclick="deleteLayer(${layer.id})" title="Eliminar capa">✕</button>`:''}
+      </div>
+      <div class="bar-rows" id="barrows-${layer.id}"></div>
+      <button class="add-bar-btn" onclick="addBarRow(${layer.id})">+ Añadir tipo de barra a esta capa</button>
+      <div class="layer-sep-row">
+        <div class="field">
+          <label>Sep. vertical desde capa ${li===0?'borde':'anterior'} <span class="utag">cm</span></label>
+          <input type="number" min="0" step=".5" value="${layer.sepV}"
+            style="font-size:11px;padding:6px 8px"
+            oninput="updateLayerSep(${layer.id},this.value)">
+        </div>
+        <div class="field" style="align-self:end">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px">
+            As capa ${li+1}
+          </div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--acc);padding:7px 0" id="as-layer-${layer.id}">
+            — cm²
+          </div>
+        </div>
+      </div>
+    `;
+    cont.appendChild(div);
+
+    // Renderizar filas de barras
+    renderBarRows(layer);
+    updateLayerAs(layer);
+  });
+
+  redraw();
+}
+
+function renderBarRows(layer){
+  const cont=document.getElementById(`barrows-${layer.id}`);
+  if(!cont)return;
+  cont.innerHTML='';
+  layer.barRows.forEach((row,ri)=>{
+    const div=document.createElement('div');
+    div.className='bar-row';
+
+    // Select de número de barra
+    const selOpts=BAR_NUMS.map(n=>`<option value="${n}" ${n===row.nb?'selected':''}>#${n} (ø${DIAM[n].toFixed(2)})</option>`).join('');
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:5px">
+        <div style="width:9px;height:9px;border-radius:50%;background:${BAR_COLORS[row.nb]};flex-shrink:0"></div>
+        <select style="font-size:11px;padding:5px 22px 5px 5px" onchange="updateBarNb(${layer.id},${ri},this.value)">
+          ${selOpts}
+        </select>
+      </div>
+      <input type="number" min="1" step="1" value="${row.count}" placeholder="cant."
+        style="font-size:11px;padding:5px 6px;text-align:center"
+        oninput="updateBarCount(${layer.id},${ri},this.value)">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding-left:4px">
+        As = ${(AREA[row.nb]*row.count).toFixed(3)} cm²
+      </div>
+      ${layer.barRows.length>1?`<button class="del-row-btn" onclick="deleteBarRow(${layer.id},${ri})">✕</button>`:'<div></div>'}
+    `;
+    cont.appendChild(div);
+  });
+}
+
+function updateLayerAs(layer){
+  const el=document.getElementById(`as-layer-${layer.id}`);
+  if(!el)return;
+  const As=layer.barRows.reduce((s,r)=>s+AREA[r.nb]*r.count,0);
+  el.textContent=As.toFixed(3)+' cm²';
+}
+
+// ══════════════════════════════════════════════════════
+// ACCIONES DE CAPAS
+// ══════════════════════════════════════════════════════
+function addLayer(){
+  layers.push(makeLayer());
+  renderLayersUI();
+}
+function deleteLayer(id){
+  if(layers.length<=1)return;
+  layers=layers.filter(l=>l.id!==id);
+  renderLayersUI();
+}
+function addBarRow(lid){
+  const layer=layers.find(l=>l.id===lid);
+  if(!layer)return;
+  layer.barRows.push(makeBarRow());
+  renderBarRows(layer);
+  updateLayerAs(layer);
+  redraw();
+}
+function deleteBarRow(lid,ri){
+  const layer=layers.find(l=>l.id===lid);
+  if(!layer||layer.barRows.length<=1)return;
+  layer.barRows.splice(ri,1);
+  renderBarRows(layer);
+  updateLayerAs(layer);
+  redraw();
+}
+function updateBarNb(lid,ri,val){
+  const layer=layers.find(l=>l.id===lid);
+  if(!layer)return;
+  layer.barRows[ri].nb=parseInt(val);
+  renderBarRows(layer);
+  updateLayerAs(layer);
+  redraw();
+}
+function updateBarCount(lid,ri,val){
+  const layer=layers.find(l=>l.id===lid);
+  if(!layer)return;
+  layer.barRows[ri].count=Math.max(1,parseInt(val)||1);
+  renderBarRows(layer);
+  updateLayerAs(layer);
+  redraw();
+}
+function updateLayerSep(lid,val){
+  const layer=layers.find(l=>l.id===lid);
+  if(!layer)return;
+  layer.sepV=Math.max(0,parseFloat(val)||0);
+  redraw();
+}
+
+// ══════════════════════════════════════════════════════
+// CALCULAR GEOMETRÍA DE CAPAS (dt)
+// Capa 1 = inferior, capa N = superior
+// dt medido desde fibra extrema de compresión (parte superior) hacia abajo
+// ══════════════════════════════════════════════════════
+function computeLayerGeometry(){
+  const h=parseFloat(document.getElementById('altura').value)||60;
+  const rec=parseFloat(document.getElementById('rec').value)||4;
+  const nEst=parseInt(document.getElementById('bestr').value)||3;
+  const dEst=DIAM[nEst];
+
+  // Radio máximo de barra en cada capa
+  const layerData=layers.map(layer=>{
+    const rMax=Math.max(...layer.barRows.map(r=>DIAM[r.nb]/2));
+    const As=layer.barRows.reduce((s,r)=>s+AREA[r.nb]*r.count,0);
+    const totalBars=layer.barRows.reduce((s,r)=>s+r.count,0);
+    return{...layer,rMax,As,totalBars};
+  });
+
+  // Posición vertical desde abajo (y_bottom_cm)
+  // Capa 1 (idx 0): y = rec + dEst + rMax[0]   desde abajo
+  // Capa 2 (idx 1): y = y[0] + rMax[0] + sepV[1] + rMax[1]
+  let yCumul=0;
+  const computed=[];
+  layerData.forEach((layer,i)=>{
+    if(i===0){
+      yCumul=rec+dEst+layer.rMax;
+    } else {
+      yCumul=computed[i-1].yFromBottom+computed[i-1].rMax+layer.sepV+layer.rMax;
+    }
+    // dt = h - yFromBottom  (desde arriba = eje compresión)
+    const dt=h-yCumul;
+    computed.push({...layer,yFromBottom:yCumul,dt:Math.max(0,dt)});
+  });
+  return computed;
+}
+
+// ══════════════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════════════
+const CW=520,CH=380;
+const canvas=document.getElementById('sectionCanvas');
+const ctx=canvas.getContext('2d');
+
+function redraw(){
+  const b=parseFloat(document.getElementById('base').value)||30;
+  const h=parseFloat(document.getElementById('altura').value)||60;
+  const rec=parseFloat(document.getElementById('rec').value)||4;
+  const nEst=parseInt(document.getElementById('bestr').value)||3;
+  const dEst=DIAM[nEst];
+
+  const PAD={l:56,r:76,t:36,b:46};
+  const scX=(CW-PAD.l-PAD.r)/b;
+  const scY=(CH-PAD.t-PAD.b)/h;
+  const sc=Math.min(scX,scY,5.5);
+  const bPx=b*sc,hPx=h*sc;
+  const x0=PAD.l+(CW-PAD.l-PAD.r-bPx)/2;
+  const y0=PAD.t+(CH-PAD.t-PAD.b-hPx)/2;
+
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle='#07080d';
+  ctx.fillRect(0,0,CW,CH);
+
+  // Sección concreto
+  ctx.fillStyle='#10131e';
+  ctx.beginPath();ctx.rect(x0,y0,bPx,hPx);ctx.fill();
+  ctx.strokeStyle='#28304a';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.rect(x0,y0,bPx,hPx);ctx.stroke();
+
+  // Estribo
+  const ep=(rec+dEst/2)*sc;
+  const er=Math.max(dEst*sc/2,1.5);
+  ctx.strokeStyle='#c8a84b';ctx.lineWidth=Math.max(dEst*sc*.7,1);
+  ctx.beginPath();
+  ctx.roundRect(x0+ep-er,y0+ep-er,bPx-2*(ep-er),hPx-2*(ep-er),er);
+  ctx.stroke();
+
+  // Cotas
+  drawDims(x0,y0,bPx,hPx,b,h,sc);
+
+  // Capas con geometría calculada
+  const layerGeo=computeLayerGeometry();
+
+  layerGeo.forEach((layer,li)=>{
+    const yFromBottom=layer.yFromBottom;
+    const dt=layer.dt;
+    const cy=y0+hPx-yFromBottom*sc;  // coordenada canvas Y del centroide de la capa
+
+    // Línea de capa (horizontal)
+    ctx.strokeStyle='rgba(200,168,75,.2)';
+    ctx.lineWidth=.7;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(x0,cy);ctx.lineTo(x0+bPx,cy);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Barras distribuidas uniformemente
+    const totalBars=layer.totalBars;
+    const availW=bPx-2*(rec+dEst)*sc;
+    const spacing=totalBars>1?availW/(totalBars-1):0;
+    const xStart=x0+(rec+dEst)*sc;
+
+    // Construir lista de barras para dibujar (en orden nb)
+    const barList=[];
+    layer.barRows.forEach(row=>{
+      for(let k=0;k<row.count;k++) barList.push(row.nb);
+    });
+
+    barList.forEach((nb,bi)=>{
+      const cx=totalBars===1?x0+bPx/2:xStart+bi*spacing;
+      const rPx=Math.max(DIAM[nb]/2*sc,3.5);
+      const col=BAR_COLORS[nb];
+
+      ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=5;
+      ctx.fillStyle=col+'bb';
+      ctx.beginPath();ctx.arc(cx,cy,rPx,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.strokeStyle=col;ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.arc(cx,cy,rPx,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#fff';
+      ctx.font=`bold ${Math.max(rPx*.85,6)}px 'DM Mono',monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(nb,cx,cy);
+    });
+
+    // Anotación dt (lado derecho)
+    const annX=x0+bPx+6;
+    ctx.strokeStyle='rgba(75,141,200,.5)';
+    ctx.lineWidth=.7;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(annX,cy);ctx.lineTo(annX+54,cy);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#4b8dc8';
+    ctx.font="8.5px 'DM Mono',monospace";
+    ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText(`dt${li+1}=${dt.toFixed(1)}cm`,annX+2,cy-5);
+
+    // Anotación capa (lado izquierdo)
+    ctx.fillStyle='#c8a84b';
+    ctx.font="8px 'DM Mono',monospace";
+    ctx.textAlign='right';
+    ctx.fillText(`C${li+1}`,x0-4,cy);
+  });
+
+  // Resumen lateral
+  updateLayersSummary(layerGeo);
+}
+
+function drawDims(x0,y0,bPx,hPx,b,h,sc){
+  ctx.fillStyle='#6a7a9e';
+  ctx.font="10px 'DM Mono',monospace";
+  ctx.strokeStyle='#4a546e';ctx.lineWidth=.8;
+
+  // b
+  const ay=y0+hPx+26;
+  ctx.beginPath();ctx.moveTo(x0,ay);ctx.lineTo(x0+bPx,ay);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x0,ay-4);ctx.lineTo(x0,ay+4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x0+bPx,ay-4);ctx.lineTo(x0+bPx,ay+4);ctx.stroke();
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(`b = ${b} cm`,x0+bPx/2,ay+6);
+
+  // h
+  const ax=x0-30;
+  ctx.save();ctx.translate(ax,y0+hPx/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText(`h = ${h} cm`,0,0);ctx.restore();
+  ctx.beginPath();ctx.moveTo(ax+10,y0);ctx.lineTo(ax+10,y0+hPx);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+5,y0);ctx.lineTo(ax+15,y0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+5,y0+hPx);ctx.lineTo(ax+15,y0+hPx);ctx.stroke();
+}
+
+function updateLayersSummary(layerGeo){
+  const summ=document.getElementById('layers-summary');
+  if(layerGeo.length===0){
+    summ.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:6px">Añade capas de refuerzo para ver el resumen</div>';
+    return;
+  }
+  summ.innerHTML=layerGeo.map((layer,li)=>{
+    const barDesc=layer.barRows.map(r=>`${r.count}·#${r.nb}`).join(' + ');
+    const dots=layer.barRows.map(r=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${BAR_COLORS[r.nb]};margin-right:2px"></span>`).join('');
+    return `<div class="ls-row">
+      <span class="ls-badge">C${li+1}</span>
+      <div class="ls-info">${dots} ${barDesc} · As = ${layer.As.toFixed(3)} cm²</div>
+      <div class="ls-dt">dt${li+1} = ${layer.dt.toFixed(2)} cm</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// CÁLCULO
+// ══════════════════════════════════════════════════════
+function clrErr(){const e=document.getElementById('err');e.style.display='none';e.textContent=''}
+function showErr(m){const e=document.getElementById('err');e.textContent='⚠  '+m;e.style.display='block'}
+
+function calcular(){
+  clrErr();
+  document.getElementById('res-card').style.display='none';
+  try{
+    const fcMPa=parseFloat(document.getElementById('fc').value);
+    const fyMPa=parseFloat(document.getElementById('fy').value);
+    if(!fcMPa||fcMPa<10) throw new Error("Ingrese un f'c válido (MPa).");
+    if(!fyMPa||fyMPa<200) throw new Error('Ingrese un fy válido (MPa).');
+
+    const fc=fcMPa*MPa2kgf, fy=fyMPa*MPa2kgf;
+    const b=parseFloat(document.getElementById('base').value)||0;
+    const h=parseFloat(document.getElementById('altura').value)||0;
+    if(b<=0) throw new Error('Ingrese la base b.');
+    if(h<=0) throw new Error('Ingrese la altura h.');
+    if(layers.length===0) throw new Error('Añade al menos una capa de refuerzo.');
+
+    const espiral=document.getElementById('espiral').checked;
+
+    // β1 (MPa, NSR-10)
+    const beta1=fcMPa<=28?0.85:Math.max(0.65,0.85-0.05*(fcMPa-28)/7);
+
+    const layerGeo=computeLayerGeometry();
+
+    // Validar dt > 0 en todas las capas
+    layerGeo.forEach((layer,i)=>{
+      if(layer.dt<=0) throw new Error(`La capa ${i+1} tiene dt ≤ 0. Revise recubrimiento o separación vertical.`);
+      if(layer.barRows.some(r=>r.count<1)) throw new Error(`La capa ${i+1} tiene filas sin barras.`);
+    });
+
+    const AsTotal=layerGeo.reduce((s,l)=>s+l.As,0);
+    const dPond  =layerGeo.reduce((s,l)=>s+l.dt*l.As,0)/AsTotal;
+    const dtMax  =Math.max(...layerGeo.map(l=>l.dt));
+
+    const rho=AsTotal/(b*dPond);
+    const rhoMin=Math.max(0.80*Math.sqrt(fc)/fy,14/fy);
+    const rhob=0.85*beta1*(fc/fy)*(6000/(6000+fy));
+    const rhoMax=0.75*rhob;
+    const rhoT=0.637*rhob;
+
+    const a=AsTotal*fy/(0.85*fc*b);
+    const c=a/beta1;
+
+    const Es=2040000;
+    const epsY=fy/Es;
+    const epsT=(dtMax/c-1)*0.003;
+
+    const resCaps=layerGeo.map((layer,i)=>({
+      id:i+1,dt:layer.dt,As:layer.As,
+      barRows:layer.barRows,
+      eps:(layer.dt/c-1)*0.003,
+      get fluye(){return this.eps>=epsY},
+      get cumple(){return this.eps>=0.004}
+    }));
+
+    let phi;
+    if(epsT>=0.005) phi=0.90;
+    else if(epsT<=epsY){phi=espiral?0.75:0.65;}
+    else{const pm=espiral?0.75:0.65;phi=pm+(0.90-pm)*(epsT-epsY)/(0.005-epsY);}
+
+    const Mn_kgcm=layerGeo.reduce((s,l)=>s+l.As*fy*(l.dt-a/2),0);
+    const phiMn_kgcm=phi*Mn_kgcm;
+    const cb=6000*dPond/(6000+fy);
+
+    let tN,tD,tC,tI;
+    if(epsT<epsY){tN='SOBRE REFORZADA';tD='Falla frágil — No cumple NSR-10';tC='var(--red)';tI='✗';}
+    else if(epsT<0.004){tN='TRANSICIÓN BAJA';tD='εs < 0.004 — No cumple NSR-10';tC='var(--red)';tI='⚠';}
+    else if(epsT<0.005){tN='ZONA DE TRANSICIÓN';tD='0.004 ≤ εs < 0.005 — Cumple, φ varía';tC='var(--acc)';tI='◑';}
+    else{tN='CONTROLADA POR TRACCIÓN';tD='εs ≥ 0.005 — Falla dúctil, φ = 0.90';tC='var(--green)';tI='✓';}
+
+    const todoCumple=rho>=rhoMin&&epsT>=0.004&&rho<=rhoMax&&resCaps.every(r=>r.fluye);
+
+    renderResults({fcMPa,fyMPa,fc,fy,b,h,a,c,beta1,AsTotal,dPond,dtMax,
+      rho,rhoMin,rhob,rhoMax,rhoT,epsT,epsY,phi,Mn_kgcm,phiMn_kgcm,cb,
+      resCaps,tN,tD,tC,tI,todoCumple,espiral});
+
+  }catch(e){showErr(e.message)}
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER RESULTADOS
+// ══════════════════════════════════════════════════════
+function renderResults(R){
+  const ul=sym('long'),ures=sym('res'),umom=sym('mom');
+  const pill=document.getElementById('res-pill');
+  pill.textContent=R.todoCumple?'✓ CUMPLE':'✗ REVISAR';
+  pill.className='status-pill '+(R.todoCumple?'pill-ok':'pill-fail');
+
+  const cV=cvt(R.c,'long'),aV=cvt(R.a,'long'),cbV=cvt(R.cb,'long'),dV=cvt(R.dPond,'long');
+  const fcV=cvt(R.fc,'res'),fyV=cvt(R.fy,'res');
+  const MnV=cvt(R.Mn_kgcm,'mom'),pMnV=cvt(R.phiMn_kgcm,'mom');
+
+  document.getElementById('res-metrics').innerHTML=`
+    <div class="metric"><div class="m-label">Eje neutro c</div><div class="m-val acc">${fmt(cV)}<span class="m-unit">${ul}</span></div></div>
+    <div class="metric"><div class="m-label">Bloque a</div><div class="m-val blue">${fmt(aV)}<span class="m-unit">${ul}</span></div></div>
+    <div class="metric"><div class="m-label">β₁</div><div class="m-val">${R.beta1.toFixed(4)}</div></div>
+    <div class="metric"><div class="m-label">As total</div><div class="m-val">${fmt(R.AsTotal)}<span class="m-unit">cm²</span></div></div>
+    <div class="metric"><div class="m-label">d ponderado</div><div class="m-val blue">${fmt(dV)}<span class="m-unit">${ul}</span></div></div>
+    <div class="metric"><div class="m-label">cb balanceado</div><div class="m-val">${fmt(cbV)}<span class="m-unit">${ul}</span></div></div>
+    <div class="metric"><div class="m-label">εt extrema</div><div class="m-val ${R.epsT>=0.004?'green':'red'}">${R.epsT.toFixed(6)}</div></div>
+    <div class="metric"><div class="m-label">φ</div><div class="m-val acc">${R.phi.toFixed(4)}</div></div>
+    <div class="metric"><div class="m-label">Mn nominal</div><div class="m-val blue">${fmt(MnV,3)}<span class="m-unit">${umom}</span></div></div>
+    <div class="metric"><div class="m-label">φMn diseño</div><div class="m-val acc">${fmt(pMnV,3)}<span class="m-unit">${umom}</span></div></div>
+    <div class="metric"><div class="m-label">f'c</div><div class="m-val">${fmt(fcV,2)}<span class="m-unit">${ures}</span></div></div>
+    <div class="metric"><div class="m-label">fy</div><div class="m-val">${fmt(fyV,2)}<span class="m-unit">${ures}</span></div></div>
+  `;
+
+  const maxR=Math.max(R.rho,R.rhob)*1.25||.04;
+  const pct=v=>Math.min(100,v/maxR*100).toFixed(1)+'%';
+  document.getElementById('res-cuantias').innerHTML=`
+    <div class="cuantias-title">// Relación de cuantías</div>
+    ${cRow('ρ (real)',R.rho,'cb-rho',pct(R.rho))}
+    ${cRow('ρ_min',R.rhoMin,'cb-min',pct(R.rhoMin))}
+    ${cRow('ρ_T (0.637ρb)',R.rhoT,'cb-t',pct(R.rhoT))}
+    ${cRow('ρ_max (0.75ρb)',R.rhoMax,'cb-max',pct(R.rhoMax))}
+    ${cRow('ρ_b',R.rhob,'cb-b',pct(R.rhob))}
+  `;
+
+  document.getElementById('res-tipo').innerHTML=`
+    <div class="tipo-icon" style="background:${R.tC}22;color:${R.tC}">${R.tI}</div>
+    <div><div class="tipo-name" style="color:${R.tC}">${R.tN}</div><div class="tipo-desc">${R.tD}</div></div>`;
+
+  document.getElementById('res-layers').innerHTML=R.resCaps.map(r=>{
+    const dtV=cvt(r.dt,'long');
+    const cls=r.cumple?'ok':(r.eps>=R.epsY?'warn':'fail');
+    const icon=r.cumple?'✓':(r.eps>=R.epsY?'◑':'✗');
+    const barDesc=r.barRows.map(row=>{
+      const dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${BAR_COLORS[row.nb]};margin-right:2px;vertical-align:middle"></span>`;
+      return `${dot}${row.count}·#${row.nb}`;
+    }).join(' <span style="color:var(--muted)">+</span> ');
+    const verdText=r.cumple?'<b>Cumple</b> — εs ≥ 0.004':
+      (r.eps>=R.epsY?'<b>Transición</b> — εy ≤ εs &lt; 0.004':'<b>No cumple</b> — εs &lt; εy');
+    return `<div class="lr">
+      <div class="lr-ic ${cls}">${icon}</div>
+      <div>
+        <div class="lr-name">Capa ${r.id} · As = ${r.As.toFixed(3)} cm²</div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px">${barDesc}</div>
+        <div class="lr-eps ${cls}">εs${r.id} = ${r.eps.toFixed(6)}</div>
+        <div class="lr-verdict">${verdText} · ${r.fluye?'<b>Fluye</b>':'<b style="color:var(--red)">No fluye</b>'}</div>
+      </div>
+      <div><div class="lr-dt-l">dt${r.id}</div><div class="lr-dt-v">${fmt(dtV)} ${ul}</div></div>
+    </div>`;
+  }).join('');
+
+  const checks=[
+    {ok:R.rho>=R.rhoMin,txt:`ρ (${R.rho.toFixed(5)}) ${R.rho>=R.rhoMin?'≥':'<'} ρ_min (${R.rhoMin.toFixed(5)}) — Cuantía mínima NSR-10 C.10.5`},
+    {ok:R.rho<=R.rhoMax,txt:`ρ (${R.rho.toFixed(5)}) ${R.rho<=R.rhoMax?'≤':'>'} ρ_max (${R.rhoMax.toFixed(5)}) — Cuantía máxima NSR-10 C.10.3.5`},
+    {ok:R.epsT>=0.004,txt:`εt (${R.epsT.toFixed(6)}) ${R.epsT>=0.004?'≥':'<'} 0.004 — Deformación mínima NSR-10 C.10.3.5`},
+    {ok:R.resCaps.every(r=>r.fluye),txt:`Todas las capas en fluencia (εsi ≥ εy = ${R.epsY.toFixed(5)})`},
+    {ok:R.c<=0.428*R.dtMax,txt:`c (${R.c.toFixed(3)} cm) ${R.c<=0.428*R.dtMax?'≤':'>'} 0.428·dt (${(0.428*R.dtMax).toFixed(3)} cm) — Sección dúctil`},
+    {ok:true,txt:`φ = ${R.phi.toFixed(4)} — Factor de reducción (${R.espiral?'espiral':'otros estribos'})`}
+  ];
+  document.getElementById('res-flow').innerHTML=checks.map((c,i)=>`
+    <div class="flow-step ${c.ok?'ok':'fail'}">
+      <div class="fs-num">${i+1}</div>
+      <div class="fs-txt"><b>${c.ok?'✓':'✗'}</b> ${c.txt}</div>
+    </div>`).join('');
+
+  document.getElementById('res-card').style.display='block';
+  document.getElementById('res-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cRow(name,val,cls,pct){
+  return `<div class="cuantia-row">
+    <span class="cuantia-name">${name}</span>
+    <div class="cuantia-bar-wrap"><div class="cuantia-bar ${cls}" style="width:${pct}"></div></div>
+    <span class="cuantia-val">${val.toFixed(5)}</span>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+// Crear una capa inicial por defecto
+layers.push(makeLayer());
+renderLayersUI();
+
+// ══════════════════════════════════════════════════════
+// SISTEMA DE ACCESO POR CÓDIGO
+// ══════════════════════════════════════════════════════
+// Los códigos se almacenan como hashes SHA-256.
+// Para agregar/quitar códigos, edita VALID_HASHES.
+// Para generar el hash de un nuevo código, usa:
+//   https://emn178.github.io/online-tools/sha256.html
+//   (escribe el código en mayúsculas y copia el hash)
+//
+// CÓDIGOS ACTUALES:
+//   VIGA-2024-A1B2  →  usuario 1
+//   VIGA-2024-C3D4  →  usuario 2
+//   VIGA-2024-E5F6  →  usuario 3
+//   VIGA-2024-G7H8  →  usuario 4
+//   VIGA-2024-I9J0  →  usuario 5
+//   DEMO-GRATIS-01  →  demo
+// ══════════════════════════════════════════════════════
+
+const VALID_HASHES = [
+  '2c3676bffe9d18b7744d124c5084b086999bab5db55d1dc22fa48f11ef469747',
+  'fee576bbf2db61fd39594b3680029a20b5951f7dbfdacf12dba1441154ad6fe5',
+  '4b98aabeffdc392275bc8a8a1e16a9993fca4e4e1f7ede9751b8f80712899780',
+  '80ac2a66293084b1d1346b0c818863730f35bf1400a0e62507bec8abebd1c50b',
+  '1929fbdb2ff05e97e5f99318a0dd03e9b3810d044a46cf31c2561d1c12585bc9',
+  '73e67160302d44af9df06984880f4b14f9256b5e4e732cf54b28af619576a23e',
+];
+
+// Duración de la sesión: 30 días
+const SESSION_KEY   = 'vca_access_granted';
+const SESSION_DAYS  = 30;
+
+async function sha256(text){
+  const buf = await crypto.subtle.digest(
+    'SHA-256', new TextEncoder().encode(text)
+  );
+  return Array.from(new Uint8Array(buf))
+    .map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkAccess(){
+  const inp  = document.getElementById('access-input');
+  const btn  = document.getElementById('access-btn');
+  const err  = document.getElementById('access-err');
+  const code = inp.value.trim().toUpperCase();
+
+  if(!code){ inp.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando…';
+  err.style.display = 'none';
+  inp.classList.remove('error');
+
+  const hash = await sha256(code);
+
+  if(VALID_HASHES.includes(hash)){
+    // Guardar sesión con expiración
+    const expires = Date.now() + SESSION_DAYS * 86400000;
+    localStorage.setItem(SESSION_KEY, JSON.stringify({hash, expires}));
+    grantAccess();
+  } else {
+    inp.classList.add('error');
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Ingresar →';
+    inp.select();
+  }
+}
+
+function grantAccess(){
+  const screen = document.getElementById('access-screen');
+  screen.style.transition = 'opacity .4s ease';
+  screen.style.opacity = '0';
+  setTimeout(()=>{ screen.style.display='none'; }, 400);
+}
+
+function checkSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    if(!raw) return false;
+    const {hash, expires} = JSON.parse(raw);
+    if(Date.now() > expires){
+      localStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    return VALID_HASHES.includes(hash);
+  } catch(e){ return false; }
+}
+
+// Al cargar: verificar si ya hay sesión activa
+if(checkSession()){
+  document.getElementById('access-screen').style.display='none';
+}
+
+</script>
+</body>
+</html>
